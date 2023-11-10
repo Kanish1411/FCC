@@ -65,7 +65,7 @@ t2=time.time()
 print(t2-t1)
 fi.close()
 print("sent")
-cliSoc.close()"""
+cliSoc.close()
 import socket
 import os
 from diffieSender import base
@@ -117,5 +117,22 @@ folder_path = "encrypt"
 receiver_host = "127.0.0.1"
 receiver_port = 6000
 send_images(folder_path, receiver_host, receiver_port)
+"""
 
+video_path = "video.mp4"
+output_directory = "encrypt"
+video = cv2.VideoCapture(video_path)
+count = 0
+if not os.path.exists(output_directory):
+    os.makedirs(output_directory)
+
+while True:
+    success, frame = video.read()
+    if not success:
+        break
+    encrypted_frame = frame
+    fname = f"{count}.png"
+    frame_path = os.path.join(output_directory, fname)
+    cv2.imwrite(frame_path, encrypted_frame)
+    count+=1
 
