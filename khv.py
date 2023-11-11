@@ -1,4 +1,3 @@
-
 def permRows(t):
     i=0
     j=len(t)-1
@@ -11,7 +10,6 @@ def permRows(t):
     if i==j:
         p.append(t[i])
     return p
-
 
 def revPermRows(t):
     i=0
@@ -47,14 +45,6 @@ def isf(t):
         if n>=len(i):
             n=0
     return p
-
-def enc(b,k):
-    b[0],b[1],b[2]=b[2],b[0],b[1]
-    return b
-
-def dec(b,k):
-    b[0],b[1],b[2]=b[1],b[2],b[0]
-    return b
 
         
 
