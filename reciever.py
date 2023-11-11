@@ -37,6 +37,7 @@ def receiveframes(soc, output_directory):
             with open(frame_path, "wb") as image_file:
                 image_file.write(frame_data['image_data'])
             buffer = b"" 
+    
 def frametovid(input_path, output_path):
     fps = 30
     frame_array = []
@@ -65,6 +66,7 @@ def frametovid(input_path, output_path):
         out.write(frame_array[i])
     
     out.release()
+
 def decrypt_and_save(input_directory, output_directory):
     frame_number = 0
     os.makedirs(output_directory, exist_ok=True)
@@ -77,6 +79,7 @@ def decrypt_and_save(input_directory, output_directory):
             decrypted_frame = decrypt(input_path, key) 
             Image.fromarray(decrypted_frame, "RGB").save(output_path)
             frame_number += 1
+        
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((socket.gethostname(), 6000))
 t=time.time()
