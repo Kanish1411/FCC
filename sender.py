@@ -3,7 +3,6 @@ import os,cv2,sympy,time,pickle
 from diffieSender import base
 from pix import encrypt
 from moviepy.editor import VideoFileClip,concatenate_audioclips,AudioFileClip
-from pydub import AudioSegment
 import numpy as np
 port=6000
 server=socket.gethostbyname(socket.gethostname())
@@ -65,19 +64,8 @@ def sendframes(soc, directory):
 def encrypt_audio(input_video, output_audio):
     video_clip = VideoFileClip(input_video)
     audio_clip = video_clip.audio
-
-    # Extract audio data
-    print("sjhfdg skdjfgasoikdhfka;sudfyoasljdgfp;aosdkfjasiufdas;dnfasdkfljsdbgo")
-    print(audio_clip)
-    
-    # Add some noise (modify this part based on your encryption algorithm)
-    """noise = np.random.normal(0, 0.5, audio_data.shape)
-    encrypted_audio_data = audio_data + noise
-    encrypted_audio_clip = AudioSegment(encrypted_audio_data.tobytes(), frame_rate=44100, sample_width=2, channels=2)
-
-    # Save the encrypted audio
-    encrypted_audio_clip.export(output_audio, format="mp3")
-    video_clip.close()"""
+    audio_clip.write_audiofile(output_audio)
+    video_clip.close()
     
 while True:
     soc,add=s.accept()
