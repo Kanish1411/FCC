@@ -27,4 +27,5 @@ def decrypt(file,key):
     for i in range(int(key,base=2)%100+6):
         p1=revPermRows(p1)
     o = np.array(p1,dtype=np.uint8)
+    Image.fromarray(o,"RGB").save("output.png")
     return o
