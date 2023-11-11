@@ -28,7 +28,7 @@ def videofram():
         frame_path = os.path.join(output_directory, fname)
         cv2.imwrite(frame_path, encrypted_frame)
         count+=1
-
+    print("yoohooo")
 def setup(soc):
     global key
     t=base()
@@ -64,7 +64,9 @@ def sendframes(soc, directory):
                 soc.sendall(frame_pickle)
                 frame_number += 1
                 print("sent",frame_number-1)
+            print(image_path)
     soc.sendall(b"<END>")
+    exit()
 while True:
     soc,add=s.accept()
     inp=input("enter video name")
@@ -72,12 +74,12 @@ while True:
         print("file not found")
         break
     setup(soc)
-    thread=threading.Thread(target=videofram)
-    thread.start()
-    time.sleep(5)
-    thread2=threading.Thread(target=sendframes,args=(soc,"encrypt"))
-    thread2.start()
-    time.sleep(2)
+    #thread=threading.Thread(target=videofram)
+    #thread.start()
+    videofram()
+    #thread2=threading.Thread(target=sendframes,args=(soc,"encrypt"))
+    #thread2.start()
+    sendframes(soc,"encrypt")
 soc.close()
 
 

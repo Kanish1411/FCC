@@ -3,33 +3,85 @@ import sympy
 from pix import decrypt
 import time,cv2,pickle,os
 import numpy as np
+from PIL import Image
 def receiveframes(soc, output_directory):
     frame_number = 0
     buffer_size = 4096
     buffer = b""
     while True:
-        data_len_bytes = soc.recv(4)
+        print("Y")
+        try:
+                data_len_bytes = soc.recv(4)
+        except:
+                break
+        
         if not data_len_bytes:
             break
         data_len = int.from_bytes(data_len_bytes, byteorder='big')
         remaining_data = data_len - len(buffer)
-
+        print(remaining_data)
         while remaining_data > 0:
-            chunk = soc.recv(min(remaining_data, buffer_size))
+            try:
+                soc.settimeout(5)
+                chunk = soc.recv(min(remaining_data, buffer_size))
+            except:
+                break
+            
             if not chunk:
                 break
             buffer += chunk
             remaining_data -= len(chunk)
-
+            print("yeee")
+        print("ysdf")
+        if b"<END>" in buffer:
+            print("Received end signal. Exiting.")
+            break
+        print("ashd")
         if len(buffer) == data_len:
             frame_data = pickle.loads(buffer)
-            filename = f"received_frame_{frame_data['frame_number']}.png"
+            filename = f"{frame_data['frame_number']}.png"
             frame_path = os.path.join(output_directory, filename)
             with open(frame_path, "wb") as image_file:
                 image_file.write(frame_data['image_data'])
             print(f"Received {filename}")
-            buffer = b""  # Reset buffer for the next frame
+            buffer = b"" 
+    decrypt_and_save(output_directory,"decrypted")
+def frametovid(path):
+    input = path
+    op="video_dec.mp4"
+    fps = 30
+    frame_array = []
+    files = [f for f in os.listdir(input) if f.endswith('.png')]
+    files.sort(key=lambda x: int(x.split('.')[0]))
+    for i in range(len(files)):
+        filename = os.path.join(input, files[i])
+        img = cv2.imread(filename)
+        if i != 0:
+            height, width, layers = img.shape
+            size = (width, height)
+            frame_array.append(img)
+    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+    out = cv2.VideoWriter(op, fourcc, fps, size)
+    for i in range(len(frame_array)):
+        out.write(frame_array[i])
+    out.release()
 
+def decrypt_and_save(input_directory, output_directory):
+    frame_number = 0
+    os.makedirs(output_directory, exist_ok=True)
+
+    for filename in sorted(os.listdir(input_directory), key=lambda x: int(x.split('.')[0])):
+        if filename.endswith(".png"):
+            input_path = os.path.join(input_directory, filename)
+            output_path = os.path.join(output_directory, f"{frame_number}.png")
+
+            decrypted_frame = decrypt(input_path, key)  # Adjust 'key' based on your requirements
+
+            # Save the decrypted frame
+            Image.fromarray(decrypted_frame, "RGB").save(output_path)
+            print(f"Decrypted and saved frame {frame_number}")
+            frame_number += 1
+    frametovid(output_directory)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((socket.gethostname(), 6000))
 t1 = time.time()
@@ -61,9 +113,9 @@ u = True
 output_directory = "received_frames"
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
-while u:
-    receiveframes(s, output_directory)
-    """fs = s.recv(2048).decode('utf-8', 'ignore')
+receiveframes(s, output_directory)
+exit()
+"""fs = s.recv(2048).decode('utf-8', 'ignore')
     fi = open("file.png", "wb")
     print("receiving file...")
     header = s.recv(8).decode('utf-8')
