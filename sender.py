@@ -12,9 +12,9 @@ s.bind(addr)
 s.listen(1)
 key=0
 done=0
-def videofram():
+def videofram(a):
     global done
-    video_path = "video2.mp4"
+    video_path = a
     output_directory = "encrypt"
     video = cv2.VideoCapture(video_path)
     count = 0
@@ -27,9 +27,8 @@ def videofram():
         encrypted_frame = encrypt(frame,key)
         fname = f"{count}.png"
         frame_path = os.path.join(output_directory, fname)
-        cv2.imwrite(frame_path, encrypted_frame)
+        cv2.imwrite(frame_path,encrypted_frame)
         count+=1
-    done=1
 def setup(soc):
     global key
     t=base()
@@ -37,17 +36,12 @@ def setup(soc):
     soc.send(bytes(str(g)+"-"+str(p),"utf-8"))
     x=sympy.randprime(0,1000)
     y=(g**x)%p
-    print("y:",y)
     soc.send(bytes(str(y),"utf-8"))
     xf=soc.recv(2048)
     xf=int(xf)
-    print(xf)
     yf=(xf**x)%p
-    print(yf)
     k=yf
     k=(k**4)%(2**32)
-    print("k:",k)
-    print(bin(k),len(str(bin(k))))
     key=str(bin(k))[2:]
     while len(key)<32:
         key="1"+key
@@ -64,24 +58,25 @@ def sendframes(soc, directory):
                 soc.sendall(len(frame_pickle).to_bytes(4, byteorder='big'))
                 soc.sendall(frame_pickle)
                 frame_number += 1
-                print("sent",frame_number-1)
-            print(image_path)
     soc.sendall(b"<END>")
-    exit()
 while True:
     soc,add=s.accept()
-    """inp=input("enter video name")
+    inp=input("enter video name")
     if not os.path.exists(inp):
         print("file not found")
-        break"""
+        break
+    t=time.time()
     setup(soc)
-    thread=threading.Thread(target=videofram)
-    thread.start()
-    time.sleep(15)
+    t1=time.time()
+    print("Socket",t1-t)
+    videofram(inp)
+    t2=time.time()
+    print("Videoframe",t2-t1)
     sendframes(soc,"encrypt")
-    time.sleep(10)
-    if done ==1:
-        os.remove("encrypt")
+    t3=time.time()
+    print("send",t3-t2)
+    print("full",t3-t)
+    exit()
 soc.close()
 
 

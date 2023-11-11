@@ -10,7 +10,6 @@ def receiveframes(soc, output_directory):
     buffer_size = 4096
     buffer = b""
     while True:
-        print("Y")
         try:
                 data_len_bytes = soc.recv(4)
         except:
@@ -20,7 +19,6 @@ def receiveframes(soc, output_directory):
             break
         data_len = int.from_bytes(data_len_bytes, byteorder='big')
         remaining_data = data_len - len(buffer)
-        print(remaining_data)
         while remaining_data > 0:
             try:
                 soc.settimeout(2)
@@ -32,20 +30,17 @@ def receiveframes(soc, output_directory):
                 break
             buffer += chunk
             remaining_data -= len(chunk)
-            print("yeee")
-        print("ysdf")
         if b"<END>" in buffer:
             print("Received end signal. Exiting.")
             break
-        print("ashd")
         if len(buffer) == data_len:
             frame_data = pickle.loads(buffer)
             filename = f"{frame_data['frame_number']}.png"
             frame_path = os.path.join(output_directory, filename)
             with open(frame_path, "wb") as image_file:
                 image_file.write(frame_data['image_data'])
-            print(f"Received {filename}")
-            buffer = b"" 
+            buffer = b""
+        print("y") 
 def frametovid(input_path, output_path):
     fps = 30
     frame_array = []
@@ -68,7 +63,6 @@ def frametovid(input_path, output_path):
                 print(f"Skipping frame {i + 1} due to dimension mismatch.")
 
     # Create the output directory if it doesn't exist
-    output_directory = os.path.dirname(output_path)
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
@@ -92,11 +86,10 @@ def decrypt_and_save(input_directory, output_directory):
 
             # Save the decrypted frame
             Image.fromarray(decrypted_frame, "RGB").save(output_path)
-            print(f"Decrypted and saved frame {frame_number}")
             frame_number += 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((socket.gethostname(), 6000))
-t1 = time.time()
+t=time.time()
 k = None
 msg = s.recv(2048)
 msg = str(msg)
@@ -104,20 +97,14 @@ msg = msg[2:len(msg) - 1]
 b = msg.split("-")
 g = int(b[0])
 p = int(b[1])
-print(b)
 x = sympy.randprime(0, 1000)
 y = (g ** x) % p
-print("y:", y)
 s.send(bytes(str(y), "utf-8"))
 xf = s.recv(2048)
 xf = int(xf)
-print(xf)
 yf = (xf ** x) % p
-print(yf)
 k = yf
 k = (k ** 4) % (2 ** 32)
-print("k:", k)
-print(bin(k), len(str(bin(k))))
 key = str(bin(k))[2:]
 while len(key) < 32:
     key = "1" + key
@@ -125,12 +112,19 @@ u = True
 output_directory = "received_frames"
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
-while True:
-    receiveframes(s, output_directory)
-    if not os.path.exists("encrypt"):
-        break
+
+t1=time.time()
+print("Socket",t1-t)
+receiveframes(s, output_directory)
+t2=time.time()
+print("RecieveFrames",t2-t1)
 decrypt_and_save(output_directory,"decrypted")
-frametovid(output_directory,"final")
+t3=time.time()
+print("Decrypt",t3-t2)
+frametovid("decrypted","final.mp4")
+t4=time.time()
+print("frametovid",t4-t3)
+print("full",t4-t)
 exit()
 """fs = s.recv(2048).decode('utf-8', 'ignore')
     fi = open("file.png", "wb")
