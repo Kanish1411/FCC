@@ -11,9 +11,10 @@ s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(addr)
 s.listen(1)
 key=0
-
+done=0
 def videofram():
-    video_path = "video.mp4"
+    global done
+    video_path = "video2.mp4"
     output_directory = "encrypt"
     video = cv2.VideoCapture(video_path)
     count = 0
@@ -28,7 +29,7 @@ def videofram():
         frame_path = os.path.join(output_directory, fname)
         cv2.imwrite(frame_path, encrypted_frame)
         count+=1
-    print("yoohooo")
+    done=1
 def setup(soc):
     global key
     t=base()
@@ -69,17 +70,18 @@ def sendframes(soc, directory):
     exit()
 while True:
     soc,add=s.accept()
-    inp=input("enter video name")
+    """inp=input("enter video name")
     if not os.path.exists(inp):
         print("file not found")
-        break
+        break"""
     setup(soc)
-    #thread=threading.Thread(target=videofram)
-    #thread.start()
-    videofram()
-    #thread2=threading.Thread(target=sendframes,args=(soc,"encrypt"))
-    #thread2.start()
+    thread=threading.Thread(target=videofram)
+    thread.start()
+    time.sleep(15)
     sendframes(soc,"encrypt")
+    time.sleep(10)
+    if done ==1:
+        os.remove("encrypt")
 soc.close()
 
 

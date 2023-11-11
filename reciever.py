@@ -4,6 +4,7 @@ from pix import decrypt
 import time,cv2,pickle,os
 import numpy as np
 from PIL import Image
+import threading
 def receiveframes(soc, output_directory):
     frame_number = 0
     buffer_size = 4096
@@ -22,7 +23,7 @@ def receiveframes(soc, output_directory):
         print(remaining_data)
         while remaining_data > 0:
             try:
-                soc.settimeout(5)
+                soc.settimeout(2)
                 chunk = soc.recv(min(remaining_data, buffer_size))
             except:
                 break
@@ -45,27 +46,39 @@ def receiveframes(soc, output_directory):
                 image_file.write(frame_data['image_data'])
             print(f"Received {filename}")
             buffer = b"" 
-    decrypt_and_save(output_directory,"decrypted")
-def frametovid(path):
-    input = path
-    op="video_dec.mp4"
+def frametovid(input_path, output_path):
     fps = 30
     frame_array = []
-    files = [f for f in os.listdir(input) if f.endswith('.png')]
+    files = [f for f in os.listdir(input_path) if f.endswith('.png')]
     files.sort(key=lambda x: int(x.split('.')[0]))
+
+    # Read the first frame to get dimensions
+    first_frame = cv2.imread(os.path.join(input_path, files[0]))
+    height, width, layers = first_frame.shape
+    size = (width, height)
+
     for i in range(len(files)):
-        filename = os.path.join(input, files[i])
+        filename = os.path.join(input_path, files[i])
         img = cv2.imread(filename)
-        if i != 0:
-            height, width, layers = img.shape
-            size = (width, height)
-            frame_array.append(img)
+        if img is not None:
+            # Ensure all frames have the same dimensions
+            if img.shape == first_frame.shape:
+                frame_array.append(img)
+            else:
+                print(f"Skipping frame {i + 1} due to dimension mismatch.")
+
+    # Create the output directory if it doesn't exist
+    output_directory = os.path.dirname(output_path)
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
     fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-    out = cv2.VideoWriter(op, fourcc, fps, size)
+    out = cv2.VideoWriter(output_path, fourcc, fps, size)
+    
     for i in range(len(frame_array)):
         out.write(frame_array[i])
+    
     out.release()
-
 def decrypt_and_save(input_directory, output_directory):
     frame_number = 0
     os.makedirs(output_directory, exist_ok=True)
@@ -81,7 +94,6 @@ def decrypt_and_save(input_directory, output_directory):
             Image.fromarray(decrypted_frame, "RGB").save(output_path)
             print(f"Decrypted and saved frame {frame_number}")
             frame_number += 1
-    frametovid(output_directory)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((socket.gethostname(), 6000))
 t1 = time.time()
@@ -113,7 +125,12 @@ u = True
 output_directory = "received_frames"
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
-receiveframes(s, output_directory)
+while True:
+    receiveframes(s, output_directory)
+    if not os.path.exists("encrypt"):
+        break
+decrypt_and_save(output_directory,"decrypted")
+frametovid(output_directory,"final")
 exit()
 """fs = s.recv(2048).decode('utf-8', 'ignore')
     fi = open("file.png", "wb")
